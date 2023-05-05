@@ -17,12 +17,12 @@ namespace DataBinding
         #endregion
 
         #region Static Methods
-        public static void Binding(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode bindingMode = BindingMode.OneWay)
+        public static void Binding(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode bindingMode = BindingMode.OneWay, IDataBindingValueConverter converter = null)
         {
-            Instance.BindingObject(source, sourcePropertyName, target, targetPropertyName, bindingMode);
+            Instance.BindingObject(source, sourcePropertyName, target, targetPropertyName, bindingMode, converter);
         }
 
-        public static bool OnPropertyChanged<T>(IDataBindingObject sender, String propertyName, T value)
+        public static bool OnPropertyChanged(IDataBindingObject sender, String propertyName, Object value)
         {
             return Instance.PropertyChnagedd(sender, propertyName, value);
         }
@@ -39,7 +39,7 @@ namespace DataBinding
         #endregion
 
         #region Methods
-        private void BindingObject(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode bindingMode)
+        private void BindingObject(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode bindingMode, IDataBindingValueConverter converter)
         {
             if (source is null)
             {
@@ -68,12 +68,12 @@ namespace DataBinding
                 throw new ArgumentException($"The property named {targetPropertyName} of the target is already bound!");
             }
 
-            var record = new DataBindingRecord(source, sourcePropertyName, target, targetPropertyName, bindingMode);
+            var record = new DataBindingRecord(source, sourcePropertyName, target, targetPropertyName, bindingMode, converter);
             DataBindingRecordDict.Add(source, sourcePropertyName, record);
             DataBindingRecordDict.Add(target, targetPropertyName, record);
         }
 
-        private bool PropertyChnagedd<T>(IDataBindingObject sender, String propertyName, T value)
+        private bool PropertyChnagedd(IDataBindingObject sender, String propertyName, Object value)
         {
             if (sender is null || String.IsNullOrWhiteSpace(propertyName))
             {

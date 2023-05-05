@@ -7,6 +7,7 @@ namespace DataBinding
     {
         private bool m_twoWayChanging;
         private BindingMode m_bindingMode;
+        private IDataBindingValueConverter m_converter;
 
         public IDataBindingObject Source { get; private set; }
         public PropertyInfo SourcePropertyInfo { get; private set; }
@@ -14,12 +15,13 @@ namespace DataBinding
         public IDataBindingObject Target { get; private set; }
         public PropertyInfo TargetPropertyInfo { get; private set; }
 
-        private DataBindingRecord(BindingMode bindingMode = BindingMode.OneWay)
+        private DataBindingRecord(BindingMode bindingMode, IDataBindingValueConverter converter)
         {
             m_bindingMode = bindingMode;
+            m_converter = converter;
         }
 
-        public DataBindingRecord(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode mode) : this(mode)
+        public DataBindingRecord(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode mode, IDataBindingValueConverter valueConverter) : this(mode, valueConverter)
         {
             if (source is null)
             {
@@ -72,14 +74,14 @@ namespace DataBinding
             }
         }
 
-        public bool NotifyValueChanged<T>(IDataBindingObject sender, T value)
+        public bool NotifyValueChanged(IDataBindingObject sender, Object value)
         {
             switch (m_bindingMode)
             {
                 case BindingMode.OneWay:
                     if (ReferenceEquals(sender, Source))
                     {
-                        TargetPropertyInfo.SetValue(Target, value);
+                        TargetPropertyInfo.SetValue(Target, m_converter?.Convert(value) ?? value);
                         return true;
                     }
                     return false;
@@ -91,11 +93,11 @@ namespace DataBinding
                     m_twoWayChanging = true;
                     if (ReferenceEquals(sender, Source))
                     {
-                        TargetPropertyInfo.SetValue(Target, value);
+                        TargetPropertyInfo.SetValue(Target, m_converter?.Convert(value) ?? value);
                     }
                     else if (ReferenceEquals(sender, Target))
                     {
-                        SourcePropertyInfo.SetValue(Source, value);
+                        SourcePropertyInfo.SetValue(Source, m_converter?.ConvertBack(value) ?? value);
                     }
                     else
                     {
@@ -107,7 +109,7 @@ namespace DataBinding
                 case BindingMode.OneWayToSource:
                     if (ReferenceEquals(sender, Target))
                     {
-                        SourcePropertyInfo.SetValue(Source, value);
+                        SourcePropertyInfo.SetValue(Source, m_converter?.ConvertBack(value) ?? value);
                         return true;
                     }
                     return false;
