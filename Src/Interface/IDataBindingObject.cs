@@ -1,11 +1,13 @@
-﻿namespace DataBinding
+﻿using System;
+
+namespace DataBinding
 {
     /// <summary>
     /// Only Class
     /// </summary>
     public interface IDataBindingObject
     {
-        bool SetPropertyValue<T>(ref T target, T value, string propertyName)
+        Boolean SetPropertyValue<T>(ref T target, T value, string propertyName)
         {
             if (DataBindingCenter.OnPropertyChanged(this, propertyName, value))
             {

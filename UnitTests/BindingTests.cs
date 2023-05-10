@@ -1,5 +1,4 @@
-﻿using DataBinding;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System;
 
 namespace DataBinding.UnitTests

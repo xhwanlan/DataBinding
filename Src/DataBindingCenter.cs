@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataBinding.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,28 +18,59 @@ namespace DataBinding
         #endregion
 
         #region Static Methods
+
+        public static Boolean OnPropertyChanged(IDataBindingObject sender, String propertyName, Object value)
+        {
+            return Instance.PropertyChnagedd(sender, propertyName, value);
+        }
+
         public static void Binding(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode bindingMode = BindingMode.OneWay, IDataBindingValueConverter converter = null)
         {
             Instance.BindingObject(source, sourcePropertyName, target, targetPropertyName, bindingMode, converter);
         }
 
-        public static bool OnPropertyChanged(IDataBindingObject sender, String propertyName, Object value)
-        {
-            return Instance.PropertyChnagedd(sender, propertyName, value);
-        }
-
-        public static bool ClearBinding(IDataBindingObject target, String propertyName)
+        public static Boolean ClearBinding(IDataBindingObject target, String propertyName)
         {
             return Instance.Clear(target, propertyName);
         }
 
-        public static bool ClearAllBindings(IDataBindingObject target)
+        public static Boolean ClearAllBindings(IDataBindingObject target)
         {
             return Instance.ClearAll(target);
+        }
+
+        public static Boolean OnCollectionChanged<TSourceKey, TSourceValue>(IDataBindingCollectionObject<TSourceKey, TSourceValue> sender, ref DataBindingCollectionOperation<TSourceKey, TSourceValue> operation)
+        {
+            return Instance.CollectionChanged(sender, ref operation);
+        }
+
+        public static void BindingCollection<TSourceKey, TSourceValue, TTargetKey, TTargetValue>(IDataBindingCollectionObject<TSourceKey, TSourceValue> source, IDataBindingCollectionObject<TTargetKey, TTargetValue> target, BindingMode bindingMode = BindingMode.TwoWay, IDataBindingCollectionKeyValueConverter keyValueConverter = null)
+        {
+            Instance.BindingCollectionObject(source, target, bindingMode, keyValueConverter);
+        }
+
+        public static Boolean ClearCollectionBinding(IDataBindingCollectionObject target)
+        {
+            return Instance.ClearCollection(target, target.PropertyName);
         }
         #endregion
 
         #region Methods
+        private Boolean PropertyChnagedd(IDataBindingObject sender, String propertyName, Object value)
+        {
+            if (sender is null || String.IsNullOrWhiteSpace(propertyName))
+            {
+                return false;
+            }
+
+            if (DataBindingRecordDict.TryGetValue(sender, propertyName, out var record))
+            {
+                return record.NotifyValueChanged(sender, value);
+            }
+
+            return true;
+        }
+
         private void BindingObject(IDataBindingObject source, String sourcePropertyName, IDataBindingObject target, String targetPropertyName, BindingMode bindingMode, IDataBindingValueConverter converter)
         {
             if (source is null)
@@ -49,6 +81,7 @@ namespace DataBinding
             {
                 throw new ArgumentNullException(nameof(target));
             }
+
             if (String.IsNullOrWhiteSpace(sourcePropertyName))
             {
                 throw new ArgumentException("The property name is invalid!", nameof(sourcePropertyName));
@@ -73,22 +106,7 @@ namespace DataBinding
             DataBindingRecordDict.Add(target, targetPropertyName, record);
         }
 
-        private bool PropertyChnagedd(IDataBindingObject sender, String propertyName, Object value)
-        {
-            if (sender is null || String.IsNullOrWhiteSpace(propertyName))
-            {
-                return false;
-            }
-
-            if (DataBindingRecordDict.TryGetValue(sender, propertyName, out var record))
-            {
-                return record.NotifyValueChanged(sender, value);
-            }
-
-            return true;
-        }
-
-        private bool Clear(IDataBindingObject target, String propertyName)
+        private Boolean Clear(IDataBindingObject target, String propertyName)
         {
             if (target is null || String.IsNullOrWhiteSpace(propertyName))
             {
@@ -120,7 +138,7 @@ namespace DataBinding
             return false;
         }
 
-        private bool ClearAll(IDataBindingObject target)
+        private Boolean ClearAll(IDataBindingObject target)
         {
             if (target is null)
             {
@@ -153,10 +171,99 @@ namespace DataBinding
 
             return false;
         }
+
+        private Boolean CollectionChanged<TSourceKey, TSourceValue>(IDataBindingCollectionObject<TSourceKey, TSourceValue> sender, ref DataBindingCollectionOperation<TSourceKey, TSourceValue> operation)
+        {
+            if (sender is null || String.IsNullOrWhiteSpace(sender.PropertyName))
+            {
+                return false;
+            }
+
+            if (DataBindingRecordDict.TryGetValue(sender, sender.PropertyName, out var record))
+            {
+                return record.NotifyCollectionChanged(sender, ref operation);
+            }
+
+            return true;
+        }
+
+        private void BindingCollectionObject<TSourceKey, TSourceValue, TTargetKey, TTargetValue>(IDataBindingCollectionObject<TSourceKey, TSourceValue> source, IDataBindingCollectionObject<TTargetKey, TTargetValue> target, BindingMode bindingMode = BindingMode.TwoWay, IDataBindingCollectionKeyValueConverter keyValueConverter = null)
+        {
+            if (source is null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+            if (target is null)
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
+
+            if (String.IsNullOrWhiteSpace(source.PropertyName))
+            {
+                throw new ArgumentException("The property name is invalid!", nameof(source));
+            }
+            if (String.IsNullOrWhiteSpace(target.PropertyName))
+            {
+                throw new ArgumentException("The property name is invalid!", nameof(target));
+            }
+
+            if (DataBindingRecordDict.ContainsKey(source, source.PropertyName))
+            {
+                throw new ArgumentException($"The property named {source.PropertyName} of the source is already bound!");
+            }
+
+            if (DataBindingRecordDict.ContainsKey(target, target.PropertyName))
+            {
+                throw new ArgumentException($"The property named {target.PropertyName} of the target is already bound!");
+            }
+
+            var record = new DataBindingRecord(bindingMode, keyValueConverter);
+            record.BindingCollection(source, target);
+
+            DataBindingRecordDict.Add(source, source.PropertyName, record);
+            DataBindingRecordDict.Add(target, target.PropertyName, record);
+        }
+
+        private Boolean ClearCollection(IDataBindingObject target, String propertyName)
+        {
+            if (target is null || String.IsNullOrWhiteSpace(propertyName))
+            {
+                return false;
+            }
+
+            if (DataBindingRecordDict.TryGetValue(target, propertyName, out var record))
+            {
+                if (!record.IsCollection)
+                {
+                    return false;
+                }
+
+                var recordSource = (IDataBindingCollectionObject)record.Source;
+                var recordSourcePropertyName = recordSource.PropertyName;
+
+                var recordTarget = (IDataBindingCollectionObject)record.Target;
+                var recordTargetPropertyName = recordTarget.PropertyName;
+
+                if (!DataBindingRecordDict.Remove(recordSource, recordSourcePropertyName))
+                {
+                    return false;
+                }
+
+                if (!DataBindingRecordDict.Remove(recordTarget, recordTargetPropertyName))
+                {
+                    DataBindingRecordDict.Add(recordSource, recordTargetPropertyName, record);
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
         #endregion
 
         #region Nested Class
-        sealed class DataBindingDictionary<TKey1, TKey2, TValue> : Dictionary<TKey1, Dictionary<TKey2, TValue>>
+        private sealed class DataBindingDictionary<TKey1, TKey2, TValue> : Dictionary<TKey1, Dictionary<TKey2, TValue>>
         {
             public TValue this[TKey1 key1, TKey2 key2]
             {
@@ -179,7 +286,7 @@ namespace DataBinding
                 base[key1].Add(key2, value);
             }
 
-            public bool Remove(TKey1 key1, TKey2 key2)
+            public Boolean Remove(TKey1 key1, TKey2 key2)
             {
                 if (!base.ContainsKey(key1))
                 {
@@ -188,7 +295,7 @@ namespace DataBinding
                 return base[key1].Remove(key2);
             }
 
-            public bool ContainsKey(TKey1 key1, TKey2 key2)
+            public Boolean ContainsKey(TKey1 key1, TKey2 key2)
             {
                 if (!base.ContainsKey(key1))
                 {
@@ -197,7 +304,7 @@ namespace DataBinding
                 return base[key1].ContainsKey(key2);
             }
 
-            public bool TryGetValue(TKey1 key1, TKey2 key2, out TValue value)
+            public Boolean TryGetValue(TKey1 key1, TKey2 key2, out TValue value)
             {
                 value = default(TValue);
                 if (ContainsKey(key1, key2))
