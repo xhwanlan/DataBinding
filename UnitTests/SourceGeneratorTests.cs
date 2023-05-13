@@ -3,7 +3,7 @@ using System;
 
 namespace DataBinding.UnitTests
 {
-    internal class BindingTests
+    internal class SourceGeneratorTests
     {
         [Test]
         public void BindingModeOneWay()
@@ -19,8 +19,6 @@ namespace DataBinding.UnitTests
 
             school.HeadmasterName = "Bob";
             Assert.IsFalse(String.CompareOrdinal(school.HeadmasterName, person.Name) == 0);
-
-            person.ClearAllBinding();
         }
 
         [Test]
@@ -40,8 +38,6 @@ namespace DataBinding.UnitTests
             Assert.IsTrue(school.MaxTeacherAge == 23);
 
             Assert.IsTrue(school.MaxTeacherAge == person.Age);
-
-            person.ClearAllBinding();
         }
 
         [Test]
@@ -59,8 +55,6 @@ namespace DataBinding.UnitTests
 
             person.Salary = 2000;
             Assert.IsFalse(school.TeacherSalary == person.Salary);
-
-            person.ClearAllBinding();
         }
 
         [Test]
@@ -77,8 +71,6 @@ namespace DataBinding.UnitTests
             school.ClearBinding(nameof(school.TeacherSalary));
             school.TeacherSalary = 2000;
             Assert.IsFalse(school.TeacherSalary == person.Salary);
-
-            person.ClearAllBinding();
         }
 
         [Test]
@@ -108,62 +100,37 @@ namespace DataBinding.UnitTests
             Assert.IsFalse(String.CompareOrdinal(person.Name, school.HeadmasterName) == 0);
             Assert.IsFalse(person.Age == school.MaxTeacherAge);
             Assert.IsFalse(person.Salary == school.TeacherSalary);
-
-            person.ClearAllBinding();
         }
+    }
 
-        private class Person : IDataBindingObject
-        {
-            // One Way
-            private String m_name;
-            public String Name
-            {
-                get => m_name;
-                set => ((IDataBindingObject)this).SetPropertyValue(ref m_name, value, nameof(Name));
-            }
+    internal partial class Person : IDataBindingObject
+    {
+        // One Way
+        [DataBindingProperty("Name", BindingMode.OneWay, true)]
+        private String m_name;
 
-            // Two Way
-            private Byte m_age;
-            public Byte Age
-            {
-                get => m_age;
-                set => ((IDataBindingObject)this).SetPropertyValue(ref m_age, value, nameof(Age));
-            }
 
-            // One Way To Source
-            private UInt16 m_salary;
-            public UInt16 Salary
-            {
-                get => m_salary;
-                set => m_salary = value;
-            }
-        }
+        // Two Way
+        [DataBindingProperty("Age", BindingMode.TwoWay, true)]
+        private Byte m_age;
 
-        private class School : IDataBindingObject
-        {
-            // One Way
-            private String m_headmasterName;
-            public String HeadmasterName
-            {
-                get => m_headmasterName;
-                set => m_headmasterName = value;
-            }
+        // One Way To Source
+        [DataBindingProperty("Salary", BindingMode.OneWayToSource, true)]
+        private UInt16 m_salary;
+    }
 
-            // Two Way
-            private Byte m_maxTeacherAge;
-            public Byte MaxTeacherAge
-            {
-                get => m_maxTeacherAge;
-                set => ((IDataBindingObject)this).SetPropertyValue(ref m_maxTeacherAge, value, nameof(MaxTeacherAge));
-            }
+    internal partial class School
+    {
+        // One Way
+        [DataBindingProperty("HeadmasterName", BindingMode.OneWay, false)]
+        private String m_headmasterName;
 
-            // One Way To Source
-            private UInt16 m_teacherSalary;
-            public UInt16 TeacherSalary
-            {
-                get => m_teacherSalary;
-                set => ((IDataBindingObject)this).SetPropertyValue(ref m_teacherSalary, value, nameof(TeacherSalary));
-            }
-        }
+        // Two Way
+        [DataBindingProperty("MaxTeacherAge", BindingMode.TwoWay, true)]
+        private Byte m_maxTeacherAge;
+
+        // One Way To Source
+        [DataBindingProperty("TeacherSalary", BindingMode.OneWayToSource, false)]
+        private UInt16 m_teacherSalary;
     }
 }
