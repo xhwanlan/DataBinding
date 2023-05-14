@@ -114,6 +114,10 @@ namespace DataBinding
                         TargetPropertyInfo.SetValue(Target, m_converter?.Convert(value) ?? value);
                         return true;
                     }
+                    else if (ReferenceEquals(sender, Target))
+                    {
+                        return true;
+                    }
                     return false;
                 case BindingMode.TwoWay:
                     if (m_twoWayChanging)
@@ -140,6 +144,10 @@ namespace DataBinding
                     if (ReferenceEquals(sender, Target))
                     {
                         SourcePropertyInfo.SetValue(Source, m_converter?.ConvertBack(value) ?? value);
+                        return true;
+                    }
+                    else if (ReferenceEquals(sender, Source))
+                    {
                         return true;
                     }
                     return false;

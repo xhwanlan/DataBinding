@@ -106,31 +106,31 @@ namespace DataBinding.UnitTests
     internal partial class Person : IDataBindingObject
     {
         // One Way
-        [DataBindingProperty("Name", BindingMode.OneWay, true)]
+        [DataBindingProperty("Name")]
         private String m_name;
 
 
         // Two Way
-        [DataBindingProperty("Age", BindingMode.TwoWay, true)]
+        [DataBindingProperty("Age")]
         private Byte m_age;
 
         // One Way To Source
-        [DataBindingProperty("Salary", BindingMode.OneWayToSource, true)]
+        [DataBindingProperty("Salary")]
         private UInt16 m_salary;
     }
 
     internal partial class School
     {
         // One Way
-        [DataBindingProperty("HeadmasterName", BindingMode.OneWay, false)]
+        [DataBindingProperty("HeadmasterName")]
         private String m_headmasterName;
 
         // Two Way
-        [DataBindingProperty("MaxTeacherAge", BindingMode.TwoWay, true)]
+        [DataBindingProperty("MaxTeacherAge")]
         private Byte m_maxTeacherAge;
 
         // One Way To Source
-        [DataBindingProperty("TeacherSalary", BindingMode.OneWayToSource, false)]
+        [DataBindingProperty("TeacherSalary")]
         private UInt16 m_teacherSalary;
     }
 }

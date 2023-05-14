@@ -87,12 +87,8 @@ namespace {namespaceName}
             ITypeSymbol fieldType = fieldSymbol.Type;
 
             AttributeData attributeData = fieldSymbol.GetAttributes().Single(ad => ad.AttributeClass.Equals(attributeSymbol, SymbolEqualityComparer.Default));
-            var argumentArr = attributeData.ConstructorArguments.ToArray();
 
-            Byte bindMode = (Byte)argumentArr[1].Value;
-            Boolean isSource = (Boolean)argumentArr[2].Value;
-
-            String propertyName = GetName(argumentArr[0].Value);
+            String propertyName = GetName(attributeData.ConstructorArguments.First().Value);
             if (propertyName.Length == 0 || propertyName == fieldName)
             {
                 return;
@@ -107,16 +103,8 @@ namespace {namespaceName}
             set
             {{");
 
-            if (bindMode == 1 || (bindMode == 0 && isSource) || (bindMode == 2 && !isSource))
-            {
-                source.Append($@"
+            source.Append($@"
                 ((IDataBindingObject)this).SetPropertyValue(ref this.{fieldName}, value, nameof({propertyName}));");
-            }
-            else
-            {
-                source.Append($@"
-                this.{fieldName} = value;");
-            }
 
             source.Append(@"
             }
